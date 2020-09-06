@@ -17,7 +17,7 @@ def greet_user(update, contex):
     first_name = update['message']['chat']['first_name']
     last_name = update['message']['chat']['last_name']
 
-    update.message.reply_text(f"Привет {first_name} {last_name}! Напише мне, а я тебе отвечу ;)")
+    update.message.reply_text(f"Привет {first_name} {last_name}! Напиши мне, а я тебе отвечу ;)")
 
 def talk_to_user(update, context):
     """Отправка сообщения пользователю"""
