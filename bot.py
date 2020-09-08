@@ -18,9 +18,9 @@ def greet_user(update, contex):
     last_name = update.message.chat.last_name
 
     update.message.reply_text(
-        f"Привет {first_name} {last_name}!\nИспользуя команду /planet, напиши название планеты и узнай в каком " + 
-        "созвездии она сейчас находится:\n" + "1. Mercury\n2. Venus\n3. Mars\n4. Jupiter\n5. Saturn\n6. Uranus\n" +
-        "7. Neptune")
+        f"Привет {first_name} {last_name}!\n"
+        "Используя команду /planet, напиши название планеты и узнай в каком созвездии она сейчас находится:\n"
+        "1. Mercury\n2. Venus\n3. Mars\n4. Jupiter\n5. Saturn\n6. Uranus\n7. Neptune")
 
 def check_planet(update, contex):
     """Проверка планеты"""
@@ -31,24 +31,11 @@ def check_planet(update, contex):
         planet = command[1]
         date = time.strftime("%Y/%m/%d")
 
-        if planet == "Mercury":
-            data = ephem.Mercury(date)
-        elif planet == "Venus":
-            data = ephem.Venus(date)
-        elif planet == "Mars":
-            data = ephem.Mars(date)
-        elif planet == "Jupiter":
-            data = ephem.Jupiter(date)
-        elif planet == "Saturn":
-            data = ephem.Saturn(date)
-        elif planet == "Uranus":
-            data = ephem.Uranus(date)
-        elif planet == "Neptune":
-            data = ephem.Neptune(date)
+        try:
+            data = getattr(ephem, planet)(date)
+        except AttributeError:
+            update.message.reply_text(f"Нет такой планеты в списке.")
         else:
-            data = ""
-
-        if data != "":
             constellation = ephem.constellation(data)
             update.message.reply_text(f"Планета {planet} находится в созвездии {constellation[1]}.")
 
