@@ -6,18 +6,19 @@ from cities import Cities
 from glob import glob
 from random import choice
 from settings import API_KEY
+from telegram import ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 
 
 class Bot:
     """LPVSBot"""
-    
+
     def __init__(self):
         """Конструктор класса"""
 
         self.cities = Cities()
         logging.basicConfig(format='%(asctime)s | %(levelname)-8s | %(message)s', level=logging.INFO)
-    
+
     def start_bot(self):
         """Запуск бота"""
 
@@ -32,15 +33,22 @@ class Bot:
         dp.add_handler(CommandHandler('fullmoon', self.check_full_moon))
         dp.add_handler(CommandHandler('cities', self.check_city))
         dp.add_handler(CommandHandler('calc', self.calc_numbers))
+        dp.add_handler(MessageHandler(Filters.regex('^(Команда /cat)$'), self.send_cat))
+        dp.add_handler(MessageHandler(Filters.location, self.get_coordanites))
 
         logging.info('Запуск бота.')
-        
+
         my_bot.start_polling()
         my_bot.idle()
 
+    def keyboard(self):
+        """Клавиатура"""
+
+        return ReplyKeyboardMarkup([['Команда /cat', KeyboardButton('Отправить координаты', request_location=True)]])
+
     def greet_user(self, update, context):
         """Приветствие пользователя"""
-        
+
         first_name = update.message.chat.first_name
         last_name = update.message.chat.last_name
         context.user_data['emoji'] = get_emoji(context.user_data)
@@ -56,15 +64,23 @@ class Bot:
             '5. /fullmoon [ГГГГ-ММ-ДД] - укажи дату и узнай когда будет следующее полнолуние!\n'
             '6. /cities [название города] - уже прошёл GTA 5 и Call of duty: Black ops 4? Тогда попробуй сыграть в '
             'Города!\n'
-            '7. /calc [a+b-c*d/e] - выполняй арифметические операции с несколькими числами!'
+            '7. /calc [a+b-c*d/e] - выполняй арифметические операции с несколькими числами!',
+            reply_markup=self.keyboard()
         )
+
+    def get_coordanites(self, update, context):
+        """Получение координат"""
+
+        coords = update.message.location
+        message = f'Твои координаты: долгота {coords["longitude"]} и широта {coords["latitude"]}.'
+        update.message.reply_text(message)
 
     def quess_number(self, update, context):
         """Угадывание числа"""
-       
+
         if context.args:
             try:
-                user_number = int(context.args[0])
+                user_number = context.args[0]
                 message = get_random_numbers(user_number)
             except (TypeError, ValueError):
                 message = 'Введите целое число!'
@@ -87,7 +103,7 @@ class Bot:
         if len(context.args) == 1:
             planet = context.args[0]
             date = time.strftime('%Y/%m/%d')
-            
+ 
             data = getattr(ephem, planet, None)
 
             if data:
@@ -109,7 +125,7 @@ class Bot:
 
         if len(context.args) == 1:
             date = context.args[0]
-            
+
             try:
                 time.strptime(date, '%Y-%m-%d')
             except ValueError:
@@ -126,7 +142,7 @@ class Bot:
 
         user_city = update.message.text
         user_city = user_city.replace('/cities ', '').strip()
-        
+
         if user_city != '':
             self.cities.load_cities(context.user_data)
             message = self.cities.check_city(context.user_data, user_city)
@@ -136,7 +152,7 @@ class Bot:
         """Подсчёт результата арифметических действий"""
 
         if context.args != []:
-            data = ' '.join(item for item in context.args)
+            data = ''.join(context.args)
 
             try:
                 result = eval(data)
@@ -149,6 +165,7 @@ class Bot:
                 update.message.reply_text('Деление на ноль недопустимо!')
         else:
             update.message.reply_text('Не соответствует формату! Пример: a+b-c*d/e.')
+
 
 if __name__ == '__main__':
     """Вызов main"""
